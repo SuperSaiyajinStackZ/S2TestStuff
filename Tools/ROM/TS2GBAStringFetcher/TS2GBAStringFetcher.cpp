@@ -95,12 +95,12 @@ TS2GBAStringFetcher::TS2GBAStringFetcher(const std::string &ROMPath) {
 	Returns a std::string with the wanted string.
 */
 std::string TS2GBAStringFetcher::Fetch(const uint16_t StringID, const TS2GBAStringFetcher::Languages Language) {
-	std::string TempStr			=  "";
-	uint8_t     WantedLanguage	= 0x0;
+	std::string TempStr         =  "";
+	uint8_t     WantedLanguage  = 0x0;
 	uint8_t     Counter         = 0x0;
 	uint16_t    Character       = 0x0;
-	uint32_t    ShiftVal		= 0x0;
-	uint32_t    ShiftAddr		= 0x0;
+	uint32_t    ShiftVal        = 0x0;
+	uint32_t    ShiftAddr       = 0x0;
 
 	/* Ensure the data are valid and the ID is in proper range before we do it. */
 	if (this->ROMValid && this->ROMData && this->ROMData.get() && StringID < this->StringAmount) {
