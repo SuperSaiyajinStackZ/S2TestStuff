@@ -138,8 +138,9 @@ private:
 				return this->UrbzStrings[this->LangIdx(Language)];
 
 			case Games::Sims2:
-				return Sims2Strings[this->LangIdx(Language)];
+				return this->Sims2Strings[this->LangIdx(Language)];
 
+			case Games::Invalid:
 			default:
 				return { 0x0, 0x0, 0x0 };
 		}
