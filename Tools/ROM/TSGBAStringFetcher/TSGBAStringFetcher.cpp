@@ -1,5 +1,5 @@
 /*
-*   This file is part of TS2GBAStringFetcher
+*   This file is part of TSGBAStringFetcher
 *   Copyright (C) 2021 SuperSaiyajinStackZ
 *
 *   This program is free software: you can redistribute it and/or modify
@@ -26,24 +26,24 @@
 
 
 /*
-	-------------------------------------
-	The Sims 2 Game Boy Advance ROM Tools
-	-------------------------------------
-	File: TS2GBAStringFetcher.cpp | TS2GBAStringFetcher.hpp
+	------------------------------------
+	The Sims Game Boy Advance ROM Tools
+	------------------------------------
+	File: TSGBAStringFetcher.cpp | TSGBAStringFetcher.hpp
 	Authors: SuperSaiyajinStackZ
-	Version: 0.1
-	Purpose: "Extract" in-game strings from The Sims 2 Game Boy Advance.
+	Version: 0.2.0
+	Purpose: "Extract" in-game strings from The Sims Game Boy Advance games.
 	Category: ROM Tools
-	Last Updated: 28 November 2021
-	-------------------------------------
+	Last Updated: 30 November 2021
+	------------------------------------
 
 	To compile this, run:
-	g++ -D_DIRECT_USE -std=c++20 TS2GBAStringFetcher.cpp -o TS2GBAStringFetcher.exe
+	g++ -D_DIRECT_USE -std=c++20 TSGBAStringFetcher.cpp -o TSGBAStringFetcher.exe
 	^ If you want to use your own int main, then don't include -D_DIRECT_USE.
 */
 
 
-#include "TS2GBAStringFetcher.hpp" // Header of this file.
+#include "TSGBAStringFetcher.hpp" // Header of this file.
 #include <cstring> // memcmp to compare the ROM's TID.
 #include <memory> // std::unique_ptr because i like those instead of raw pointers.
 #include <string> // Default include, it's always in my projects.
@@ -52,11 +52,11 @@
 
 
 /*
-	Constructor for TS2GBAStringFetcher, which checks the passed ROM for validation and loads it into RAM.
+	Constructor for TSGBAStringFetcher, which checks the passed ROM for validation and loads it into RAM.
 
 	const std::string &ROMPath: The path to the ROM to load.
 */
-TS2GBAStringFetcher::TS2GBAStringFetcher(const std::string &ROMPath) {
+TSGBAStringFetcher::TSGBAStringFetcher(const std::string &ROMPath) {
 	if (access(ROMPath.c_str(), F_OK) != 0) return;
 
 	FILE *In = fopen(ROMPath.c_str(), "rb");
@@ -66,17 +66,23 @@ TS2GBAStringFetcher::TS2GBAStringFetcher(const std::string &ROMPath) {
 		const uint32_t Size = ftell(In);
 		fseek(In, 0, SEEK_SET);
 
-		if (Size == this->ROMSize) {
+		if (Size >= this->MinROMSize && Size <= this->MaxROMSize) {
 			uint8_t IDFromROM[4] = { '\0' };
 			fseek(In, 0xAC, SEEK_SET);
 			fread(&IDFromROM, 0x1, 0x4, In);
 			fseek(In, 0, SEEK_SET);
 
-			/* Check the Title ID of the ROM. */
-			if (memcmp(&this->TID, &IDFromROM, 0x4) == 0) {
-				this->ROMData = std::make_unique<uint8_t[]>(this->ROMSize);
-				fread(this->ROMData.get(), 0x1, this->ROMSize, In);
-				this->ROMValid = true;
+			for (uint8_t Idx = 0; Idx < 3; Idx++) {
+				/* Check the Title ID of the ROM. */
+				if (memcmp(&this->TIDs[Idx], &IDFromROM, 0x4) == 0) {
+					this->ActiveGame = (TS2GBAStringFetcher::Games)Idx;
+					break;
+				}
+			}
+
+			if (this->SupportedGame()) {
+				this->ROMData = std::make_unique<uint8_t[]>(Size);
+				fread(this->ROMData.get(), 0x1, Size, In);
 			}
 		}
 
@@ -89,37 +95,26 @@ TS2GBAStringFetcher::TS2GBAStringFetcher(const std::string &ROMPath) {
 /*
 	Fetches a string from the ROM.
 
-	const uint16_t StringID: The ID of the string to fetch ( 0x0 - 0xD85 is valid ).
+	const uint16_t StringID: The ID of the string to fetch.
 	const Languages Language: The language to fetch.
 
 	Returns a std::string with the wanted string.
 */
-std::string TS2GBAStringFetcher::Fetch(const uint16_t StringID, const TS2GBAStringFetcher::Languages Language) {
-	std::string TempStr         =  "";
-	uint8_t     WantedLanguage  = 0x0;
-	uint8_t     Counter         = 0x0;
-	uint16_t    Character       = 0x0;
-	uint32_t    ShiftVal        = 0x0;
-	uint32_t    ShiftAddr       = 0x0;
+std::string TSGBAStringFetcher::Fetch(const uint16_t StringID, const TS2GBAStringFetcher::Languages Language) {
+	std::string TempStr            =  "";
+	uint8_t     Counter            = 0x0;
+	uint16_t    MaxStringID        = 0x0;
+	uint16_t    Character          = 0x0;
+	uint32_t    ShiftVal           = 0x0;
+	uint32_t    ShiftAddr          = 0x0;
+	TS2GBAStringFetcher::StringLocs Locs;
+
 
 	/* Ensure the data are valid and the ID is in proper range before we do it. */
-	if (this->ROMValid && this->ROMData && this->ROMData.get() && StringID < this->StringAmount) {
-		/* Ensure a valid language has been provided. */
-		switch(Language) {
-			case TS2GBAStringFetcher::Languages::English:
-			case TS2GBAStringFetcher::Languages::Dutch:
-			case TS2GBAStringFetcher::Languages::French:
-			case TS2GBAStringFetcher::Languages::German:
-			case TS2GBAStringFetcher::Languages::Italian:
-			case TS2GBAStringFetcher::Languages::Spanish:
-				WantedLanguage = (uint8_t)Language;
-				break;
+	if (this->SupportedGame() && this->ROMData && this->ROMData.get() && StringID <= this->GetMaxStringID()) {
+		Locs = this->GetLocForGame(Language);
 
-			default:
-				return ""; // Invalid check for out of range things.
-		}
-
-		ShiftAddr = (this->StringLocs[WantedLanguage][0] + *reinterpret_cast<uint32_t *>(this->ROMData.get() + (StringID * 0x4) + this->StringLocs[WantedLanguage][1]));
+		ShiftAddr = (Locs.Address1 + *reinterpret_cast<uint32_t *>(this->ROMData.get() + (StringID * 0x4) + Locs.Address2));
 		ShiftVal = *reinterpret_cast<uint32_t *>(this->ROMData.get() + ShiftAddr);
 
 		do {
@@ -127,7 +122,7 @@ std::string TS2GBAStringFetcher::Fetch(const uint16_t StringID, const TS2GBAStri
 
 			do {
 				Character = *reinterpret_cast<uint16_t *>(
-					this->ROMData.get() + (Character * 0x4) + this->StringLocs[WantedLanguage][2] - (((ShiftVal >> Counter) % 0x2) == 0 ? 0x400 : 0x3FE)
+					this->ROMData.get() + (Character * 0x4) + Locs.Address3 - (((ShiftVal >> Counter) % 0x2) == 0 ? 0x400 : 0x3FE)
 				);
 
 				Counter++;
@@ -154,7 +149,7 @@ std::string TS2GBAStringFetcher::Fetch(const uint16_t StringID, const TS2GBAStri
 
 	const std::string &StringToDecode: The string to decode.
 */
-std::string TS2GBAStringFetcher::Decode(const std::string &StringToDecode) const {
+std::string TSGBAStringFetcher::Decode(const std::string &StringToDecode) const {
 	if (StringToDecode.empty()) return ""; // Do nothing as it's empty.
 	std::string NewString = "";
 
@@ -192,7 +187,7 @@ std::string TS2GBAStringFetcher::Decode(const std::string &StringToDecode) const
 			bool Provided[3] = { false, false, false };
 
 			std::string ROMPath = "";
-			TS2GBAStringFetcher::Languages WantedLang = TS2GBAStringFetcher::Languages::English;
+			TSGBAStringFetcher::Languages WantedLang = TSGBAStringFetcher::Languages::English;
 			uint16_t StringID = 0x0;
 
 			/* Go through all Arguments. */
@@ -245,7 +240,6 @@ std::string TS2GBAStringFetcher::Decode(const std::string &StringToDecode) const
 					if (Idx + 1 >= Argc) return AbortMain("No argument provided after '-id'");
 					
 					StringID = strtoul(Argv[Idx + 1], nullptr, 16);
-					if (StringID >= TS2GBAStringFetcher::StringAmount) return AbortMain("The provided ID is out of range. Valid ID range: 0x0 - 0xD85");
 
 					Provided[2] = true;
 					Idx++;
@@ -263,20 +257,22 @@ std::string TS2GBAStringFetcher::Decode(const std::string &StringToDecode) const
 
 			/* The actual action. */
 			std::unique_ptr<TS2GBAStringFetcher> Fetcher = std::make_unique<TS2GBAStringFetcher>(ROMPath);
-			if (Fetcher && Fetcher->ROMValid) {
+			if (Fetcher && Fetcher->SupportedGame()) {
+				if (StringID > Fetcher->GetMaxStringID()) return AbortMain("The String ID is too high");
+
 				std::string Fetched = Fetcher->Fetch(StringID, WantedLang);
 				printf("Your wanted string is:\n%s\n", Fetched.c_str());
 
 			} else {
-				return AbortMain("The provided ROM is either not correct, trimmed or doesn't exist");
+				return AbortMain("The provided ROM is either not supported, trimmed or doesn't exist");
 			}
 
 		/* No arguments provided => Show info. */
 		} else {
 			printf(
-				"TS2GBAStringFetcher v0.1.0 by SuperSaiyajinStackZ, © 2021.\n" \
-				"Purpose: 'Extract' in-game strings from The Sims 2 Game Boy Advance.\n\n" \
-				"Usage: -i <PathToROM> -l <Language see below> -id <Hexadecimal ID between 0 and D85>\n\n" \
+				"TSGBAStringFetcher v0.2.0 by SuperSaiyajinStackZ, © 2021.\n" \
+				"Purpose: 'Extract' in-game strings from The Sims Game Boy Advance games.\n\n" \
+				"Usage: -i <PathToROM> -l <Language see below> -id <Hexadecimal ID of the string>\n\n" \
 				"Use -i or -input and then the path to the ROM to provide it as the ROM Source.\n" \
 				"Use -l or -language to provide the language you want the string to be.\n" \
 				"Use -id to provide the ID of the string in hexadecimal format you want to fetch.\n\n" \
