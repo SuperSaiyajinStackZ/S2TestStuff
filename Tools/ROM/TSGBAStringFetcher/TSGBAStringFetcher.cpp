@@ -75,7 +75,7 @@ TSGBAStringFetcher::TSGBAStringFetcher(const std::string &ROMPath) {
 			for (uint8_t Idx = 0; Idx < 3; Idx++) {
 				/* Check the Title ID of the ROM. */
 				if (memcmp(&this->TIDs[Idx], &IDFromROM, 0x4) == 0) {
-					this->ActiveGame = (TS2GBAStringFetcher::Games)Idx;
+					this->ActiveGame = (TSGBAStringFetcher::Games)Idx;
 					break;
 				}
 			}
@@ -100,14 +100,14 @@ TSGBAStringFetcher::TSGBAStringFetcher(const std::string &ROMPath) {
 
 	Returns a std::string with the wanted string.
 */
-std::string TSGBAStringFetcher::Fetch(const uint16_t StringID, const TS2GBAStringFetcher::Languages Language) {
-	std::string TempStr            =  "";
-	uint8_t     Counter            = 0x0;
-	uint16_t    MaxStringID        = 0x0;
-	uint16_t    Character          = 0x0;
-	uint32_t    ShiftVal           = 0x0;
-	uint32_t    ShiftAddr          = 0x0;
-	TS2GBAStringFetcher::StringLocs Locs;
+std::string TSGBAStringFetcher::Fetch(const uint16_t StringID, const TSGBAStringFetcher::Languages Language) {
+	std::string TempStr           =  "";
+	uint8_t     Counter           = 0x0;
+	uint16_t    MaxStringID       = 0x0;
+	uint16_t    Character         = 0x0;
+	uint32_t    ShiftVal          = 0x0;
+	uint32_t    ShiftAddr         = 0x0;
+	TSGBAStringFetcher::StringLocs Locs;
 
 
 	/* Ensure the data are valid and the ID is in proper range before we do it. */
@@ -210,22 +210,22 @@ std::string TSGBAStringFetcher::Decode(const std::string &StringToDecode) const 
 					const std::string Lang = Argv[Idx + 1];
 
 					if (Lang == "english" || Lang == "e") {
-						WantedLang = TS2GBAStringFetcher::Languages::English;
+						WantedLang = TSGBAStringFetcher::Languages::English;
 
 					} else if (Lang == "dutch" || Lang == "d") {
-						WantedLang = TS2GBAStringFetcher::Languages::Dutch;
+						WantedLang = TSGBAStringFetcher::Languages::Dutch;
 
 					} else if (Lang == "french" || Lang == "f") {
-						WantedLang = TS2GBAStringFetcher::Languages::French;
+						WantedLang = TSGBAStringFetcher::Languages::French;
 
 					} else if (Lang == "german" || Lang == "g") {
-						WantedLang = TS2GBAStringFetcher::Languages::German;
+						WantedLang = TSGBAStringFetcher::Languages::German;
 
 					} else if (Lang == "italian" || Lang == "i") {
-						WantedLang = TS2GBAStringFetcher::Languages::Italian;
+						WantedLang = TSGBAStringFetcher::Languages::Italian;
 
 					} else if (Lang == "spanish" || Lang == "s") {
-						WantedLang = TS2GBAStringFetcher::Languages::Spanish;
+						WantedLang = TSGBAStringFetcher::Languages::Spanish;
 
 					} else {
 						return AbortMain("No valid language has been provided with the parameter '-l'");
@@ -256,7 +256,7 @@ std::string TSGBAStringFetcher::Decode(const std::string &StringToDecode) const 
 			}
 
 			/* The actual action. */
-			std::unique_ptr<TS2GBAStringFetcher> Fetcher = std::make_unique<TS2GBAStringFetcher>(ROMPath);
+			std::unique_ptr<TSGBAStringFetcher> Fetcher = std::make_unique<TSGBAStringFetcher>(ROMPath);
 			if (Fetcher && Fetcher->SupportedGame()) {
 				if (StringID > Fetcher->GetMaxStringID()) return AbortMain("The String ID is too high");
 
