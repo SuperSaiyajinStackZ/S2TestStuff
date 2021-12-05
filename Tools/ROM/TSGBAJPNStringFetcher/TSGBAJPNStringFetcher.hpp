@@ -41,15 +41,13 @@ public:
 
 	Games DetectedGame() const { return this->ActiveGame; };
 	bool SupportedGame() const { return this->ActiveGame != Games::Invalid; };
-
-	/* TODO. */
 	uint16_t GetMaxStringID() const {
 		switch(this->ActiveGame) {
 			case Games::BustinOut:
-				return 0xFFFF;
+				return 0x1A02;
 
 			case Games::Urbz:
-				return 0xFFFF;
+				return 0x1AFD;
 
 			case Games::Invalid:
 			default:

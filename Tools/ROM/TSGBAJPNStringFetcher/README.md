@@ -19,10 +19,10 @@ Right now it only outputs the raw bytes of the string, a TODO for that would be 
 ***ID Ranges***
 You can find the proper min and max values of the String IDs in the table below.
 
-| Game                        | Min | Max                     |
-| --------------------------- | --- | ----------------------- |
-| The Sims Bustin' Out        | 0x0 | (TODO: Figure this out) |
-| The Urbz - Sims in the City | 0x0 | (TODO: Figure this out) |
+| Game                        | Min | Max    |
+| --------------------------- | --- | ------ |
+| The Sims Bustin' Out        | 0x0 | 0x1A02 |
+| The Urbz - Sims in the City | 0x0 | 0x1AFD |
 
 
 # How it works
