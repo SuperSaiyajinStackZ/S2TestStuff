@@ -36,4 +36,4 @@ You can find the proper min and max values of the String IDs in the table below.
 
 # How it works
 
-***TODO, I still need to come up with a good explanation way.***
+See my [TSGBAStringFetcher (blog 2)](https://supersaiyajinstackz.github.io/blogs/blog2) blog.
