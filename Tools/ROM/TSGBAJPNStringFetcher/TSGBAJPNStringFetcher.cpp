@@ -31,7 +31,7 @@
 	------------------------------------
 	File: TSGBAJPNStringFetcher.cpp | TSGBAJPNStringFetcher.hpp
 	Authors: SuperSaiyajinStackZ
-	Version: 0.1.0
+	Version: 0.2.0
 	Purpose: "Extract" in-game strings as raw bytes from The Sims Game Boy Advance Japanese games.
 	Category: ROM Tools
 	Last Updated: 05 December 2021
@@ -65,22 +65,30 @@ TSGBAJPNStringFetcher::TSGBAJPNStringFetcher(const std::string &ROMPath) {
 		fseek(In, 0, SEEK_SET);
 
 		if (Size >= this->MinROMSize && Size <= this->MaxROMSize) {
-			uint8_t IDFromROM[4] = { '\0' };
-			fseek(In, 0xAC, SEEK_SET);
-			fread(&IDFromROM, 0x1, 0x4, In);
+			/* Check for the Magic Byte at 0xB2 that it's 0x96. */
+			uint8_t MagicByte = 0x0;
+			fseek(In, 0xB2, SEEK_SET);
+			fread(&MagicByte, 0x1, 0x1, In);
 			fseek(In, 0, SEEK_SET);
 
-			for (uint8_t Idx = 0; Idx < 2; Idx++) {
-				/* Check the Title ID of the ROM. */
-				if (memcmp(&this->TIDs[Idx], &IDFromROM, 0x4) == 0) {
-					this->ActiveGame = (TSGBAJPNStringFetcher::Games)Idx;
-					break;
-				}
-			}
+			if (MagicByte == 0x96) {
+				uint8_t IDFromROM[4] = { '\0' };
+				fseek(In, 0xAC, SEEK_SET);
+				fread(&IDFromROM, 0x1, 0x4, In);
+				fseek(In, 0, SEEK_SET);
 
-			if (this->SupportedGame()) {
-				this->ROMData = std::make_unique<uint8_t[]>(Size);
-				fread(this->ROMData.get(), 0x1, Size, In);
+				for (uint8_t Idx = 0; Idx < 2; Idx++) {
+					/* Check the Title ID of the ROM. */
+					if (memcmp(&this->TIDs[Idx], &IDFromROM, 0x4) == 0) {
+						this->ActiveGame = (TSGBAJPNStringFetcher::Games)Idx;
+						break;
+					}
+				}
+
+				if (this->SupportedGame()) {
+					this->ROMData = std::make_unique<uint8_t[]>(Size);
+					fread(this->ROMData.get(), 0x1, Size, In);
+				}
 			}
 		}
 
@@ -202,7 +210,7 @@ std::vector<uint8_t> TSGBAJPNStringFetcher::Fetch(const uint16_t StringID) {
 		/* No arguments provided => Show info. */
 		} else {
 			printf(
-				"TSGBAJPNStringFetcher v0.1.0 by SuperSaiyajinStackZ, © 2021.\n" \
+				"TSGBAJPNStringFetcher v0.2.0 by SuperSaiyajinStackZ, © 2021.\n" \
 				"Purpose: 'Extract' in-game strings as raw bytes from The Sims Game Boy Advance Japanese games.\n\n" \
 				"Usage: -i <PathToROM> -id <Hexadecimal ID of the string>\n\n" \
 				"Use -i or -input and then the path to the ROM to provide it as the ROM Source.\n" \
