@@ -41,7 +41,6 @@ public:
 	TSGBAStringFetcher(const std::string &ROMPath);
 	std::string Fetch(const uint16_t StringID, const Languages Language = Languages::English);
 
-
 	Games DetectedGame() const { return this->ActiveGame; };
 	bool SupportedGame() const { return this->ActiveGame != Games::Invalid; };
 	uint16_t GetMaxStringID() const {
@@ -72,7 +71,6 @@ private:
 	/* Bustin' Out is 16 MB, while The Urbz and The Sims 2 are 32 MB. */
 	static constexpr uint32_t MinROMSize = 0x1000000;
 	static constexpr uint32_t MaxROMSize = 0x2000000;
-
 
 	/*
 		Language String related Locations.

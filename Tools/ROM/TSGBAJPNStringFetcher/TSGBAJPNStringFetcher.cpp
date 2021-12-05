@@ -1,5 +1,5 @@
 /*
-*   This file is part of TSGBAStringFetcher
+*   This file is part of TSGBAJPNStringFetcher
 *   Copyright (C) 2021 SuperSaiyajinStackZ
 *
 *   This program is free software: you can redistribute it and/or modify
@@ -29,32 +29,32 @@
 	------------------------------------
 	The Sims Game Boy Advance ROM Tools
 	------------------------------------
-	File: TSGBAStringFetcher.cpp | TSGBAStringFetcher.hpp
+	File: TSGBAJPNStringFetcher.cpp | TSGBAJPNStringFetcher.hpp
 	Authors: SuperSaiyajinStackZ
-	Version: 0.2.0
-	Purpose: "Extract" in-game strings from The Sims Game Boy Advance games.
+	Version: 0.1.0
+	Purpose: "Extract" in-game strings as raw bytes from The Sims Game Boy Advance Japanese games.
 	Category: ROM Tools
 	Last Updated: 05 December 2021
 	------------------------------------
 
 	To compile this, run:
-	g++ -D_DIRECT_USE -std=c++20 TSGBAStringFetcher.cpp -o TSGBAStringFetcher.exe
+	g++ -D_DIRECT_USE -std=c++20 TSGBAJPNStringFetcher.cpp -o TSGBAJPNStringFetcher.exe
 	^ If you want to use your own int main, then don't include -D_DIRECT_USE.
 */
 
 
-#include "TSGBAStringFetcher.hpp" // Header of this file.
+#include "TSGBAJPNStringFetcher.hpp" // Header of this file.
 #include <cstring> // memcmp to compare the ROM's TID.
 #include <unistd.h> // access() to check for ROM File existence.
 
 
 
 /*
-	Constructor for TSGBAStringFetcher, which checks the passed ROM for validation and loads it into RAM.
+	Constructor for TSGBAJPNStringFetcher, which checks the passed ROM for validation and loads it into RAM.
 
 	const std::string &ROMPath: The path to the ROM to load.
 */
-TSGBAStringFetcher::TSGBAStringFetcher(const std::string &ROMPath) {
+TSGBAJPNStringFetcher::TSGBAJPNStringFetcher(const std::string &ROMPath) {
 	if (access(ROMPath.c_str(), F_OK) != 0) return;
 
 	FILE *In = fopen(ROMPath.c_str(), "rb");
@@ -70,10 +70,10 @@ TSGBAStringFetcher::TSGBAStringFetcher(const std::string &ROMPath) {
 			fread(&IDFromROM, 0x1, 0x4, In);
 			fseek(In, 0, SEEK_SET);
 
-			for (uint8_t Idx = 0; Idx < 3; Idx++) {
+			for (uint8_t Idx = 0; Idx < 2; Idx++) {
 				/* Check the Title ID of the ROM. */
 				if (memcmp(&this->TIDs[Idx], &IDFromROM, 0x4) == 0) {
-					this->ActiveGame = (TSGBAStringFetcher::Games)Idx;
+					this->ActiveGame = (TSGBAJPNStringFetcher::Games)Idx;
 					break;
 				}
 			}
@@ -91,24 +91,23 @@ TSGBAStringFetcher::TSGBAStringFetcher(const std::string &ROMPath) {
 
 
 /*
-	Fetches a string from the ROM.
+	Fetches a string from the ROM in a uint8_t vector.
 
 	const uint16_t StringID: The ID of the string to fetch.
-	const Languages Language: The language to fetch.
 
-	Returns a std::string with the wanted string.
+	Returns a std::vector<uint8_t> with the wanted string.
 */
-std::string TSGBAStringFetcher::Fetch(const uint16_t StringID, const TSGBAStringFetcher::Languages Language) {
-	std::string TempStr           =  "";
-	uint8_t     Counter           = 0x0;
-	uint16_t    Character         = 0x0;
-	uint32_t    ShiftVal          = 0x0;
-	uint32_t    ShiftAddr         = 0x0;
-	TSGBAStringFetcher::StringLocs Locs;
+std::vector<uint8_t> TSGBAJPNStringFetcher::Fetch(const uint16_t StringID) {
+	std::vector<uint8_t> ResVec          = { };
+	uint8_t              Counter         = 0x0;
+	uint16_t             Character       = 0x0;
+	uint32_t             ShiftVal        = 0x0;
+	uint32_t             ShiftAddr       = 0x0;
+	TSGBAJPNStringFetcher::StringLocs     Locs;
 
 	/* Ensure the data are valid and the ID is in proper range before we do it. */
 	if (this->SupportedGame() && this->ROMData && this->ROMData.get() && StringID <= this->GetMaxStringID()) {
-		Locs = this->GetLocForGame(Language);
+		Locs = this->GetLocForGame();
 
 		ShiftAddr = (Locs.Address1 + *reinterpret_cast<uint32_t *>(this->ROMData.get() + (StringID * 0x4) + Locs.Address2));
 		ShiftVal = *reinterpret_cast<uint32_t *>(this->ROMData.get() + ShiftAddr);
@@ -127,44 +126,12 @@ std::string TSGBAStringFetcher::Fetch(const uint16_t StringID, const TSGBAString
 				}
 			} while (0xFF < Character);
 
-			TempStr.push_back((uint8_t)Character);
+			ResVec.push_back((uint8_t)Character);
 		} while (Character != 0x0);
 	}
 
-	return this->Decode(TempStr); // Return the decoded string.
+	return ResVec; // Return the uint8_t vector string.
 };
-
-
-
-/*
-	Decodes the passed string with the encoding / decoding table to a new string and returns it.
-	Maybe a better way should be there? For now that way works prolly fine.
-
-	const std::string &StringToDecode: The string to decode.
-*/
-std::string TSGBAStringFetcher::Decode(const std::string &StringToDecode) const {
-	if (StringToDecode.empty()) return ""; // Do nothing as it's empty.
-	std::string NewString = "";
-
-	for (size_t CurIdx = 0; CurIdx < StringToDecode.size(); CurIdx++) {
-		const uint8_t CurChar = (uint8_t)StringToDecode[CurIdx];
-
-		/* 0x1 - 0x9: Invalid below range;        0xB - 0x1F: Invalid below range too;    0xBC+: Invalid above range. */
-		if ((CurChar >= 0x1 && CurChar <= 0x9) || (CurChar >= 0xB && CurChar <= 0x1F) || (CurChar >= 0xBC)) continue;
-		
-		/* 0x7B up to 0xBA are the sign / letter things which aren't like real ASCII. 0xBB seems to be literally blank or so and 0xBC+ is invalid. */
-		if (CurChar >= 0x7B && CurChar <= 0xBA) {
-			NewString += (this->DecodingTable[CurChar - 0x7B]);
-
-		/* Otherwise seems to be normal ASCII or whatever it is and push it normally back. */
-		} else {
-			NewString += StringToDecode[CurIdx];
-		}
-	}
-
-	return NewString;
-};
-
 
 
 /* Direct Use would include this int main. */
@@ -177,10 +144,9 @@ std::string TSGBAStringFetcher::Decode(const std::string &StringToDecode) const 
 
 	int main(int Argc, char *Argv[]) {
 		if (Argc > 1) {
-			bool Provided[3] = { false, false, false };
+			bool Provided[2] = { false, false };
 
 			std::string ROMPath = "";
-			TSGBAStringFetcher::Languages WantedLang = TSGBAStringFetcher::Languages::English;
 			uint16_t StringID = 0x0;
 
 			/* Go through all Arguments. */
@@ -196,45 +162,13 @@ std::string TSGBAStringFetcher::Decode(const std::string &StringToDecode) const 
 					Idx++;
 					continue;
 
-				/* -l => Language. */
-				} else if (ARG == "-l" || ARG == "-language") {
-					if (Idx + 1 >= Argc) return AbortMain("No argument provided after '-l'");
-
-					const std::string Lang = Argv[Idx + 1];
-
-					if (Lang == "english" || Lang == "e") {
-						WantedLang = TSGBAStringFetcher::Languages::English;
-
-					} else if (Lang == "dutch" || Lang == "d") {
-						WantedLang = TSGBAStringFetcher::Languages::Dutch;
-
-					} else if (Lang == "french" || Lang == "f") {
-						WantedLang = TSGBAStringFetcher::Languages::French;
-
-					} else if (Lang == "german" || Lang == "g") {
-						WantedLang = TSGBAStringFetcher::Languages::German;
-
-					} else if (Lang == "italian" || Lang == "i") {
-						WantedLang = TSGBAStringFetcher::Languages::Italian;
-
-					} else if (Lang == "spanish" || Lang == "s") {
-						WantedLang = TSGBAStringFetcher::Languages::Spanish;
-
-					} else {
-						return AbortMain("No valid language has been provided with the parameter '-l'");
-					}
-
-					Provided[1] = true;
-					Idx++;
-					continue;
-
 				/* -id => String ID in hexadecimal. */
 				} else if (ARG == "-id") {
 					if (Idx + 1 >= Argc) return AbortMain("No argument provided after '-id'");
 					
 					StringID = strtoul(Argv[Idx + 1], nullptr, 16);
 
-					Provided[2] = true;
+					Provided[1] = true;
 					Idx++;
 					continue;
 
@@ -244,17 +178,22 @@ std::string TSGBAStringFetcher::Decode(const std::string &StringToDecode) const 
 			}
 
 			/* Ensure all needed parameters have been provided to work on. */
-			for (int Idx = 0; Idx < 3; Idx++) {
+			for (int Idx = 0; Idx < 2; Idx++) {
 				if (!Provided[Idx]) return AbortMain("Not all needed parameters have been provided");
 			}
 
 			/* The actual action. */
-			std::unique_ptr<TSGBAStringFetcher> Fetcher = std::make_unique<TSGBAStringFetcher>(ROMPath);
+			std::unique_ptr<TSGBAJPNStringFetcher> Fetcher = std::make_unique<TSGBAJPNStringFetcher>(ROMPath);
 			if (Fetcher && Fetcher->SupportedGame()) {
 				if (StringID > Fetcher->GetMaxStringID()) return AbortMain("The String ID is too high");
+				
+				std::vector<uint8_t> Fetched = Fetcher->Fetch(StringID);
 
-				std::string Fetched = Fetcher->Fetch(StringID, WantedLang);
-				printf("Your wanted string is:\n%s\n", Fetched.c_str());
+				printf("Your wanted string is:\n");
+				for (size_t Idx = 0; Idx < Fetched.size(); Idx++) {
+					if (Idx < Fetched.size() - 1) printf("%02X, ", Fetched[Idx]);
+					else printf("%02X\n", Fetched[Idx]);
+				}
 
 			} else {
 				return AbortMain("The provided ROM is either not supported, trimmed or doesn't exist");
@@ -263,13 +202,11 @@ std::string TSGBAStringFetcher::Decode(const std::string &StringToDecode) const 
 		/* No arguments provided => Show info. */
 		} else {
 			printf(
-				"TSGBAStringFetcher v0.2.0 by SuperSaiyajinStackZ, © 2021.\n" \
-				"Purpose: 'Extract' in-game strings from The Sims Game Boy Advance games.\n\n" \
-				"Usage: -i <PathToROM> -l <Language see below> -id <Hexadecimal ID of the string>\n\n" \
+				"TSGBAJPNStringFetcher v0.1.0 by SuperSaiyajinStackZ, © 2021.\n" \
+				"Purpose: 'Extract' in-game strings as raw bytes from The Sims Game Boy Advance Japanese games.\n\n" \
+				"Usage: -i <PathToROM> -id <Hexadecimal ID of the string>\n\n" \
 				"Use -i or -input and then the path to the ROM to provide it as the ROM Source.\n" \
-				"Use -l or -language to provide the language you want the string to be.\n" \
-				"Use -id to provide the ID of the string in hexadecimal format you want to fetch.\n\n" \
-				"Valid Languages:\nenglish or e\ndutch or d\nfrench or f\ngerman or g\nitalian or i\nspanish or s\n"
+				"Use -id to provide the ID of the string in hexadecimal format you want to fetch.\n"
 			);
 		}
 
