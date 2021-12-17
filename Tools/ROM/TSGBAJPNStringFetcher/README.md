@@ -17,6 +17,7 @@ Right now it only outputs the raw bytes of the string, a TODO for that would be 
 - `-id`: The Hexadecimal ID of the String to fetch. See below for valid ID ranges (required).
 
 ***ID Ranges***
+
 You can find the proper min and max values of the String IDs in the table below.
 
 | Game                        | Min | Max    |

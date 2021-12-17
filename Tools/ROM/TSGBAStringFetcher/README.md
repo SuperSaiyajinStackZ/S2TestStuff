@@ -25,6 +25,7 @@
 - `Spanish`: spanish *or* s
 
 ***ID Ranges***
+
 You can find the proper min and max values of the String IDs in the table below.
 
 | Game                        | Min | Max    |
