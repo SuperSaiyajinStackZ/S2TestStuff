@@ -1,6 +1,6 @@
 /*
 *   This file is part of TSGBAJPNStringFetcher
-*   Copyright (C) 2021 SuperSaiyajinStackZ
+*   Copyright (C) 2021-2022 SuperSaiyajinStackZ
 *
 *   This program is free software: you can redistribute it and/or modify
 *   it under the terms of the GNU General Public License as published by
@@ -146,7 +146,7 @@ std::vector<uint8_t> TSGBAJPNStringFetcher::Fetch(const uint16_t StringID) {
 #ifdef _DIRECT_USE
 
 	int AbortMain(const std::string &Msg) {
-		printf("%s.\n", Msg.c_str());
+		printf("%s\n", Msg.c_str());
 		return 0;
 	};
 
@@ -163,7 +163,7 @@ std::vector<uint8_t> TSGBAJPNStringFetcher::Fetch(const uint16_t StringID) {
 
 				/* -i => Input. */
 				if (ARG == "-i" || ARG == "-input") {
-					if (Idx + 1 >= Argc) return AbortMain("No argument provided after '-i'");
+					if (Idx + 1 >= Argc) return AbortMain("No argument provided after '-i'.");
 					ROMPath = Argv[Idx + 1];
 
 					Provided[0] = true;
@@ -172,7 +172,7 @@ std::vector<uint8_t> TSGBAJPNStringFetcher::Fetch(const uint16_t StringID) {
 
 				/* -id => String ID in hexadecimal. */
 				} else if (ARG == "-id") {
-					if (Idx + 1 >= Argc) return AbortMain("No argument provided after '-id'");
+					if (Idx + 1 >= Argc) return AbortMain("No argument provided after '-id'.");
 					
 					StringID = strtoul(Argv[Idx + 1], nullptr, 16);
 
@@ -181,19 +181,19 @@ std::vector<uint8_t> TSGBAJPNStringFetcher::Fetch(const uint16_t StringID) {
 					continue;
 
 				} else {
-					return AbortMain("Not a valid parameter provided");
+					return AbortMain("Not a valid parameter provided.");
 				}
 			}
 
 			/* Ensure all needed parameters have been provided to work on. */
-			for (int Idx = 0; Idx < 2; Idx++) {
-				if (!Provided[Idx]) return AbortMain("Not all needed parameters have been provided");
+			for (int8_t Idx = 0; Idx < 2; Idx++) {
+				if (!Provided[Idx]) return AbortMain("Not all needed parameters have been provided.");
 			}
 
 			/* The actual action. */
 			std::unique_ptr<TSGBAJPNStringFetcher> Fetcher = std::make_unique<TSGBAJPNStringFetcher>(ROMPath);
 			if (Fetcher && Fetcher->SupportedGame()) {
-				if (StringID > Fetcher->GetMaxStringID()) return AbortMain("The String ID is too high");
+				if (StringID > Fetcher->GetMaxStringID()) return AbortMain("The String ID is too high.");
 				
 				std::vector<uint8_t> Fetched = Fetcher->Fetch(StringID);
 
@@ -204,13 +204,13 @@ std::vector<uint8_t> TSGBAJPNStringFetcher::Fetch(const uint16_t StringID) {
 				}
 
 			} else {
-				return AbortMain("The provided ROM is either not supported, trimmed or doesn't exist");
+				return AbortMain("The provided ROM is either not supported, trimmed or doesn't exist.");
 			}
 
 		/* No arguments provided => Show info. */
 		} else {
 			printf(
-				"TSGBAJPNStringFetcher v0.2.0 by SuperSaiyajinStackZ, © 2021.\n" \
+				"TSGBAJPNStringFetcher v0.2.0 by SuperSaiyajinStackZ, © 2021-2022.\n" \
 				"Purpose: 'Extract' in-game strings as raw bytes from The Sims Game Boy Advance Japanese games.\n\n" \
 				"Usage: -i <PathToROM> -id <Hexadecimal ID of the string>\n\n" \
 				"Use -i or -input and then the path to the ROM to provide it as the ROM Source.\n" \

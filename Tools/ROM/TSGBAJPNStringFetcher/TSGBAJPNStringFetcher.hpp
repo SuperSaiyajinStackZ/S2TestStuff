@@ -1,6 +1,6 @@
 /*
 *   This file is part of TSGBAJPNStringFetcher
-*   Copyright (C) 2021 SuperSaiyajinStackZ
+*   Copyright (C) 2021-2022 SuperSaiyajinStackZ
 *
 *   This program is free software: you can redistribute it and/or modify
 *   it under the terms of the GNU General Public License as published by

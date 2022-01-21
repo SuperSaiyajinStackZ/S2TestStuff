@@ -1,6 +1,6 @@
 /*
 *   This file is part of TSGBAStringFetcher
-*   Copyright (C) 2021 SuperSaiyajinStackZ
+*   Copyright (C) 2021-2022 SuperSaiyajinStackZ
 *
 *   This program is free software: you can redistribute it and/or modify
 *   it under the terms of the GNU General Public License as published by
@@ -179,7 +179,7 @@ std::string TSGBAStringFetcher::Decode(const std::string &StringToDecode) const 
 #ifdef _DIRECT_USE
 
 	int AbortMain(const std::string &Msg) {
-		printf("%s.\n", Msg.c_str());
+		printf("%s\n", Msg.c_str());
 		return 0;
 	};
 
@@ -197,7 +197,7 @@ std::string TSGBAStringFetcher::Decode(const std::string &StringToDecode) const 
 
 				/* -i => Input. */
 				if (ARG == "-i" || ARG == "-input") {
-					if (Idx + 1 >= Argc) return AbortMain("No argument provided after '-i'");
+					if (Idx + 1 >= Argc) return AbortMain("No argument provided after '-i'.");
 					ROMPath = Argv[Idx + 1];
 
 					Provided[0] = true;
@@ -206,7 +206,7 @@ std::string TSGBAStringFetcher::Decode(const std::string &StringToDecode) const 
 
 				/* -l => Language. */
 				} else if (ARG == "-l" || ARG == "-language") {
-					if (Idx + 1 >= Argc) return AbortMain("No argument provided after '-l'");
+					if (Idx + 1 >= Argc) return AbortMain("No argument provided after '-l'.");
 
 					const std::string Lang = Argv[Idx + 1];
 
@@ -229,7 +229,7 @@ std::string TSGBAStringFetcher::Decode(const std::string &StringToDecode) const 
 						WantedLang = TSGBAStringFetcher::Languages::Spanish;
 
 					} else {
-						return AbortMain("No valid language has been provided with the parameter '-l'");
+						return AbortMain("No valid language has been provided with the parameter '-l'.");
 					}
 
 					Provided[1] = true;
@@ -238,7 +238,7 @@ std::string TSGBAStringFetcher::Decode(const std::string &StringToDecode) const 
 
 				/* -id => String ID in hexadecimal. */
 				} else if (ARG == "-id") {
-					if (Idx + 1 >= Argc) return AbortMain("No argument provided after '-id'");
+					if (Idx + 1 >= Argc) return AbortMain("No argument provided after '-id'.");
 					
 					StringID = strtoul(Argv[Idx + 1], nullptr, 16);
 
@@ -247,31 +247,31 @@ std::string TSGBAStringFetcher::Decode(const std::string &StringToDecode) const 
 					continue;
 
 				} else {
-					return AbortMain("Not a valid parameter provided");
+					return AbortMain("Not a valid parameter provided.");
 				}
 			}
 
 			/* Ensure all needed parameters have been provided to work on. */
-			for (int Idx = 0; Idx < 3; Idx++) {
-				if (!Provided[Idx]) return AbortMain("Not all needed parameters have been provided");
+			for (int8_t Idx = 0; Idx < 3; Idx++) {
+				if (!Provided[Idx]) return AbortMain("Not all needed parameters have been provided.");
 			}
 
 			/* The actual action. */
 			std::unique_ptr<TSGBAStringFetcher> Fetcher = std::make_unique<TSGBAStringFetcher>(ROMPath);
 			if (Fetcher && Fetcher->SupportedGame()) {
-				if (StringID > Fetcher->GetMaxStringID()) return AbortMain("The String ID is too high");
+				if (StringID > Fetcher->GetMaxStringID()) return AbortMain("The String ID is too high.");
 
 				std::string Fetched = Fetcher->Fetch(StringID, WantedLang);
 				printf("Your wanted string is:\n%s\n", Fetched.c_str());
 
 			} else {
-				return AbortMain("The provided ROM is either not supported, trimmed or doesn't exist");
+				return AbortMain("The provided ROM is either not supported, trimmed or doesn't exist.");
 			}
 
 		/* No arguments provided => Show info. */
 		} else {
 			printf(
-				"TSGBAStringFetcher v0.3.0 by SuperSaiyajinStackZ, © 2021.\n" \
+				"TSGBAStringFetcher v0.3.0 by SuperSaiyajinStackZ, © 2021-2022.\n" \
 				"Purpose: 'Extract' in-game strings from The Sims Game Boy Advance games.\n\n" \
 				"Usage: -i <PathToROM> -l <Language see below> -id <Hexadecimal ID of the string>\n\n" \
 				"Use -i or -input and then the path to the ROM to provide it as the ROM Source.\n" \

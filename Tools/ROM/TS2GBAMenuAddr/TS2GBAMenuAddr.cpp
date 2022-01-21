@@ -1,6 +1,6 @@
 /*
 *   This file is part of TS2GBAMenuAddr
-*   Copyright (C) 2021 SuperSaiyajinStackZ
+*   Copyright (C) 2021-2022 SuperSaiyajinStackZ
 *
 *   This program is free software: you can redistribute it and/or modify
 *   it under the terms of the GNU General Public License as published by
@@ -110,7 +110,7 @@ uint32_t TS2GBAMenuAddr::GetMenuAddress(const uint32_t MenuID, const bool OnPrep
 #ifdef _DIRECT_USE
 
 	int AbortMain(const std::string &Msg) {
-		printf("%s.\n", Msg.c_str());
+		printf("%s\n", Msg.c_str());
 		return 0;
 	};
 
@@ -127,7 +127,7 @@ uint32_t TS2GBAMenuAddr::GetMenuAddress(const uint32_t MenuID, const bool OnPrep
 
 				/* -i => Input. */
 				if (ARG == "-i" || ARG == "-input") {
-					if (Idx + 1 >= Argc) return AbortMain("No argument provided after '-i'");
+					if (Idx + 1 >= Argc) return AbortMain("No argument provided after '-i'.");
 					ROMPath = Argv[Idx + 1];
 
 					Provided[0] = true;
@@ -136,7 +136,7 @@ uint32_t TS2GBAMenuAddr::GetMenuAddress(const uint32_t MenuID, const bool OnPrep
 
 				/* -id => Menu ID in hexadecimal. */
 				} else if (ARG == "-id") {
-					if (Idx + 1 >= Argc) return AbortMain("No argument provided after '-id'");
+					if (Idx + 1 >= Argc) return AbortMain("No argument provided after '-id'.");
 					
 					MenuID = strtoul(Argv[Idx + 1], nullptr, 16);
 
@@ -145,13 +145,13 @@ uint32_t TS2GBAMenuAddr::GetMenuAddress(const uint32_t MenuID, const bool OnPrep
 					continue;
 
 				} else {
-					return AbortMain("Not a valid parameter provided");
+					return AbortMain("Not a valid parameter provided.");
 				}
 			}
 
 			/* Ensure all needed parameters have been provided to work on. */
-			for (int Idx = 0; Idx < 2; Idx++) {
-				if (!Provided[Idx]) return AbortMain("Not all needed parameters have been provided");
+			for (int8_t Idx = 0; Idx < 2; Idx++) {
+				if (!Provided[Idx]) return AbortMain("Not all needed parameters have been provided.");
 			}
 
 			/* The actual action. */
@@ -170,13 +170,13 @@ uint32_t TS2GBAMenuAddr::GetMenuAddress(const uint32_t MenuID, const bool OnPrep
 				}
 
 			} else {
-				return AbortMain("The provided ROM is either not supported, trimmed or doesn't exist");
+				return AbortMain("The provided ROM is either not supported, trimmed or doesn't exist.");
 			}
 
 		/* No arguments provided => Show info. */
 		} else {
 			printf(
-				"TS2GBAMenuAddr v0.1.0 by SuperSaiyajinStackZ, © 2021.\n" \
+				"TS2GBAMenuAddr v0.1.0 by SuperSaiyajinStackZ, © 2021-2022.\n" \
 				"Purpose: Get a Menu's function pointer addresses of The Sims 2 GBA.\n\n" \
 				"Usage: -i <PathToROM> -id <Hexadecimal ID of the Menu>\n\n" \
 				"Use -i or -input and then the path to the ROM to provide it as the ROM Source.\n" \

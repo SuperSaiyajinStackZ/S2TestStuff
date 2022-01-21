@@ -1,6 +1,6 @@
 /*
 *   This file is part of TSGBAStringFetcher
-*   Copyright (C) 2021 SuperSaiyajinStackZ
+*   Copyright (C) 2021-2022 SuperSaiyajinStackZ
 *
 *   This program is free software: you can redistribute it and/or modify
 *   it under the terms of the GNU General Public License as published by
@@ -75,8 +75,8 @@ private:
 	/*
 		Language String related Locations.
 		
-		Address1: The start location where the language is stored(?) also related to the ShiftingAddress.
-		Address2: Related to the (StringID * 0x4) read value for the ShiftingAddress.
+		Address1: Combined with the value you read from (see Address2 below), this will be the initial Shifting Address.
+		Address2: Combined with the (StringID * 0x4) result, what you read (4 bytes) from that address will be related for the initial Shifting Address.
 		Address3: Related to the 0x400 / 0x3FE thing.
 	*/
 	struct StringLocs {
